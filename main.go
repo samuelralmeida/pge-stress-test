@@ -44,10 +44,20 @@ func main() {
 	results := make(chan Result, *requests)
 	var wg sync.WaitGroup
 
+	requestsPerWorker := *requests / *concurrency
+	excessRequests := *requests % *concurrency
+
 	startTime := time.Now()
 	for i := 0; i < *concurrency; i++ {
 		wg.Add(1)
-		go worker(*url, *requests / *concurrency, results, &wg)
+
+		r := requestsPerWorker
+		if excessRequests > 0 {
+			r++
+			excessRequests--
+		}
+
+		go worker(*url, r, results, &wg)
 	}
 
 	wg.Wait()
